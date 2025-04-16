@@ -12,6 +12,8 @@ if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 endif()
 
 # See: https://github.com/cpm-cmake/CPM.cmake
+add_compile_options(-D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 include("cmake/CPM.cmake")
 if (UNIX)
   # Linux users/devs prefer shared system libraries rather than

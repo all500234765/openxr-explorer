@@ -28,6 +28,17 @@ void app_cli(int32_t arg_count, const char **args) {
 	settings.allow_session = false;
 	settings.form          = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 
+	for (size_t i = 1; i < arg_count; i++)
+	{
+		const char *curr = args[i];
+		while (*curr == '-') curr++;
+		if (strcmp_nocase("allow_session", curr) == 0)
+		{
+			settings.allow_session = true;
+			break;
+		}
+	}
+
 	if (!skg_init("OpenXR Explorer", nullptr))
 		printf("Failed to init skg!\n");
 	openxr_info_reload(settings);
@@ -44,6 +55,13 @@ void app_cli(int32_t arg_count, const char **args) {
 		if (strcmp_nocase("help", curr) == 0 || strcmp_nocase("h", curr) == 0 || strcmp_nocase("/h", curr) == 0) {
 			cli_show_help();
 			show = true;
+		} else if (strcmp_nocase("all", curr) == 0)
+		{
+			for (size_t c = 0; c < xr_tables.count; c++)
+			{
+				cli_print_table(&xr_tables[c]);
+				show = true;
+			}
 		} else {
 			for (size_t c = 0; c < xr_tables.count; c++) {
 				if ((xr_tables[c].name_func && strcmp_nocase(xr_tables[c].name_func, curr) == 0) ||
@@ -74,7 +92,9 @@ Notes:	This tool shows a list of values provided from the active OpenXR
 	shown. Options are case insensitive.
 
 Options:
-	-help	Show this help information!
+	-help			Show this help information!
+	-allow_session	Initialize OpenXR Session
+	-all			Print All tables
 
 )_");
 	printf("	FUNCTIONS\n");

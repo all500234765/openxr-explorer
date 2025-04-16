@@ -28,6 +28,8 @@ xr_properties_t         xr_properties = {};
 xr_view_info_t          xr_view       = {};
 xr_extensions_t         xr_extensions = {};
 
+XrInstanceCreateInfo instance_create_info = { XR_TYPE_INSTANCE_CREATE_INFO };
+
 XrInstance  xr_instance     = {};
 const char *xr_instance_err = nullptr;
 XrSession   xr_session      = {};
@@ -96,6 +98,8 @@ void openxr_info_release() {
 
 	if (xr_session)  xrDestroySession (xr_session);
 	if (xr_instance) xrDestroyInstance(xr_instance);
+
+	instance_create_info = {};
 
 	xr_session      = XR_NULL_HANDLE;
 	xr_instance     = XR_NULL_HANDLE;
@@ -171,22 +175,43 @@ void openxr_init_instance(array_t<XrExtensionProperties> extensions) {
 		exts.add(extensions[i].extensionName);
 	}
 
-	XrInstanceCreateInfo create_info = { XR_TYPE_INSTANCE_CREATE_INFO };
-	create_info.enabledExtensionCount = (uint32_t)exts.count;
-	create_info.enabledExtensionNames = exts.data;
-	create_info.enabledApiLayerCount  = 0;
-	create_info.enabledApiLayerNames  = nullptr;
-	create_info.applicationInfo.applicationVersion = 1;
-	create_info.applicationInfo.engineVersion      = 1;
-	create_info.applicationInfo.apiVersion         = XR_CURRENT_API_VERSION;
-	snprintf(create_info.applicationInfo.applicationName, sizeof(create_info.applicationInfo.applicationName), "%s", "OpenXR Explorer");
-	snprintf(create_info.applicationInfo.engineName,      sizeof(create_info.applicationInfo.engineName     ), "None");
-	
-	XrResult result = xrCreateInstance(&create_info, &xr_instance);
-	if (XR_FAILED(result)) {
+	instance_create_info = { XR_TYPE_INSTANCE_CREATE_INFO };
+	instance_create_info.enabledExtensionCount = (uint32_t)exts.count;
+	instance_create_info.enabledExtensionNames = exts.data;
+	instance_create_info.enabledApiLayerCount = 0;
+	instance_create_info.enabledApiLayerNames = nullptr;
+	instance_create_info.applicationInfo.applicationVersion = 1;
+	instance_create_info.applicationInfo.engineVersion = 1;
+	instance_create_info.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
+	snprintf(instance_create_info.applicationInfo.applicationName, sizeof(instance_create_info.applicationInfo.applicationName), "%s", "OpenXR Explorer");
+	snprintf(instance_create_info.applicationInfo.engineName, sizeof(instance_create_info.applicationInfo.engineName), "None");
+
+	//instance_create_info.applicationInfo.apiVersion = XR_MAKE_VERSION(1, 0, 34);
+
+	int attempts = 3;
+	XrResult result = XR_ERROR_API_VERSION_UNSUPPORTED;
+	while (XR_FAILED(result) && attempts > 0)
+	{
+		result = xrCreateInstance(&instance_create_info, &xr_instance);
+		if (XR_SUCCEEDED(result))
+			break;
+
+		attempts--;
+		if (attempts == 2)
+			instance_create_info.applicationInfo.apiVersion = XR_MAKE_VERSION(1, 0, 34);
+		else if (attempts == 1)
+			instance_create_info.applicationInfo.apiVersion = XR_MAKE_VERSION(1, 0, 28);
+		else if (attempts == 0)
+			instance_create_info.applicationInfo.apiVersion = XR_MAKE_VERSION(1, 0, 19);
+	}
+
+
+
+	if (XR_FAILED(result))
+	{
 		xr_instance_err = openxr_result_string(result);
-		xr_system_err   = "No XrInstance available";
-		xr_session_err  = "No XrInstance available";
+		xr_system_err = "No XrInstance available";
+		xr_session_err = "No XrInstance available";
 	}
 }
 
@@ -351,6 +376,10 @@ xr_properties_t openxr_load_properties() {
 
 	if (!xr_instance_err) {
 		result.instance = { XR_TYPE_INSTANCE_PROPERTIES };
+
+		auto apiVersion = instance_create_info.applicationInfo.apiVersion;
+		table.cols[0].add({ "apiVersion" }); table.cols[1].add({ new_string("%d.%d.%d",XR_VERSION_MAJOR(apiVersion), XR_VERSION_MINOR(apiVersion), XR_VERSION_PATCH(apiVersion)) });
+
 		XrResult error = xrGetInstanceProperties(xr_instance, &result.instance);
 		if (XR_FAILED(error)) {
 			table.error = openxr_result_string(error);
@@ -406,6 +435,7 @@ xr_properties_t openxr_load_properties() {
 		if (xr_system_err)   properties_err = "No XrSystemId available";
 		if (xr_instance_err) properties_err = "No XrInstance available";
 	}
+
 
 	table = {};
 	table.name_func = "xrGetSystemProperties";

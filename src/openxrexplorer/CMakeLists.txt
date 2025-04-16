@@ -1,4 +1,4 @@
-project(openxr-explorer VERSION 1.0
+project(openxr-explorer VERSION 1.1
                         DESCRIPTION "A cross-platform OpenXR capabilities explorer and runtime switcher with a CLI and GUI."
                         LANGUAGES CXX)
 
@@ -7,9 +7,9 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 #### OpenXR - https://www.khronos.org/openxr/ ####
 CPMAddPackage(
   NAME OpenXR
-  VERSION 1.0.25
+  VERSION 1.1.47
   GITHUB_REPOSITORY KhronosGroup/OpenXR-SDK
-  GIT_TAG c16a18c99740ea5dd251e3af117e0e5aea4ceaa9 # v1.0.25
+  GIT_TAG 858912260ca616f4c23f7fb61c89228c353eb124 # v1.1.47
 )
 
 if (UNIX)
@@ -25,6 +25,8 @@ if (WIN32)
     )
 endif(WIN32)
 
+add_compile_options(-D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 add_executable(openxr-explorer 
     main.cpp
     openxr_info.h
@@ -59,6 +61,7 @@ add_executable(openxr-explorer
 target_include_directories(openxr-explorer PRIVATE
     ../common
     ${OpenXR_INCLUDE_DIRS})
+#target_compile_definitions(openxr-explorer PRIVATE _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 
 if (UNIX)
     set(LINUX_LIBS 

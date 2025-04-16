@@ -12,3 +12,9 @@ _deps
 build
 build_win
 build_linux
+.vs
+openxr-explorer
+openxr-explorer-linux-x64.zip
+openxr-explorer-main.rar
+openxr-explorer-win-x64.zip
+openxr-explorer.exe

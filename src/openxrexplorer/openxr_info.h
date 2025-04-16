@@ -29,9 +29,13 @@ enum display_tag_ {
 struct display_item_t {
 	const char *text;
 	const char *spec;
+	char buff[256]{};
 };
 
 struct display_table_t {
+	mutable bool            search_flag_case_sensetive;
+	mutable char            search_buffer[512]{};
+	mutable char            search_buffer_temp[512]{};
 	const char             *error;
 	const char             *name_type;
 	const char             *name_func;

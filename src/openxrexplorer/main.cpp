@@ -253,7 +253,8 @@ void app_window_view() {
 }
 
 ///////////////////////////////////////////
-
+#include <string>
+#include <cstring>
 void app_element_table(const display_table_t *table) {
 	const float  text_col = 0.7f;
 	const ImVec4 text_vec = ImVec4{ text_col,text_col,text_col,1 };
@@ -267,6 +268,31 @@ void app_element_table(const display_table_t *table) {
 		}
 
 		ImGui::Unindent(0);
+
+		bool filter_text_not_empty = false;
+		std::string filter_text = "";
+		if (table->cols[0].count > 10)
+		{
+			bool update = ImGui::InputText("Search", table->search_buffer, 512, ImGuiInputTextFlags_CharsNoBlank);
+			ImGui::SameLine();
+			ImGui::Checkbox("Cc", &table->search_flag_case_sensetive);
+
+			if (table->search_flag_case_sensetive)
+			{
+				filter_text = std::string(table->search_buffer, 512ull);
+			} else
+			{
+				if (update)
+				{
+					for (int i = 0; i < 512; i++)
+						table->search_buffer_temp[i] = tolower(table->search_buffer[i]);
+				}
+
+				filter_text = std::string(table->search_buffer_temp, 512ull);
+			}
+
+			filter_text_not_empty = strncmp(filter_text.data(), "", 512ull) != 0;
+		}
 
 		ImGuiTableFlags_ flags = ImGuiTableFlags_BordersV;
 		if (table->column_count > 2) flags = (ImGuiTableFlags_)(flags | ImGuiTableFlags_RowBg);
@@ -290,10 +316,41 @@ void app_element_table(const display_table_t *table) {
 
 			ImGui::PushStyleColor(ImGuiCol_Text, text_vec);
 
-			for (size_t i = table->header_row?1:0; i < table->cols[0].count; i++) {
+			int col_version = -1;
+			for (int i = 0; i < table->column_count; i++)
+			{
+				if (table->cols[i].count == 0)
+					continue;
+
+				if (strcmp(table->cols[i][0].text, "Version") == 0)
+				{
+					col_version = i;
+					break;
+				}
+			}
+
+			char buff[512]{};
+			for (size_t i = table->header_row?1:0; i < table->cols[0].count; i++)
+			{
+				if (filter_text_not_empty)
+				{
+					const char *text = table->cols[0][i].text;
+					if (table->search_flag_case_sensetive == false)
+					{
+						for (int i = 0; text[i] != '\0'; i++)
+							buff[i] = tolower(text[i]);
+
+						text = buff;
+					}
+
+					if (strstr(text, filter_text.data()) == nullptr)
+						continue;
+				}
+
+
 				ImGui::TableNextRow();
 				for (size_t c = 0; c < table->column_count; c++) {
-					ImGui::TableNextColumn(); 
+					ImGui::TableNextColumn();
 					if (table->cols[c][i].spec) {
 						ImGui::PushID(i);
 						ImGui::PopStyleColor();
@@ -302,7 +359,20 @@ void app_element_table(const display_table_t *table) {
 						ImGui::PushStyleColor(ImGuiCol_Text, text_vec);
 						ImGui::PopID();
 					} else {
-						ImGui::Text("%s", table->cols[c][i].text);
+						const char *text = table->cols[c][i].text;
+						if (c == col_version)
+						{
+							ImGui::Text("%s", text);
+						} else
+						{
+							int len = min(strlen(text), 256);
+							memcpy(table->cols[c][i].buff, text, len);
+
+							ImGui::SetNextItemWidth(-1.0f);
+							ImGui::PushID(text);
+							ImGui::InputText("", table->cols[c][i].buff, 256, ImGuiInputTextFlags_ReadOnly);
+							ImGui::PopID();
+						}
 					}
 				}
 			}
