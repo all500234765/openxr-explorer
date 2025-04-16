@@ -2,6 +2,15 @@
 ![Screenshot of OpenXR Explorer](docs/OpenXRExplorerWindow.png)
 OpenXR Explorer is a handy debug tool for OpenXR developers. It allows for easy switching between OpenXR runtimes, shows lists of the runtime's supported extensions, and allows for inspection of common properties and enumerations, with direct links to relevant parts of the OpenXR specification!
 
+## Usability upgrade to the original openxr-explorer
+- Updated OpenXR to 1.1.47
+- Junky fix for new MSVC STL 14.42 with mutex breakage
+- Added Case [In]Sensetive Search for large amount of fields
+- Added ability to select and copy fields
+- Added ability to export all fields with -all
+- Added ability to be run with session created at startup via -allow_session
+
+
 ## Download
 Get the latest pre-compiled Windows and Linux binaries over in [the releases tab](https://github.com/maluoi/openxr-explorer/releases)!
 
